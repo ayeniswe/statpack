@@ -20,8 +20,10 @@ use self::internal::CommandInternal;
 use super::arg::{Arg, ArgBuilder};
 use super::parser::Parser;
 use std::collections::HashSet;
-use std::fmt::Error;
+
 pub trait Command: CommandInternal + Parser {
+    /// Returns a immutable reference to the lookup table, or `None` if it is empty
+    fn lookup(&self) -> &HashSet<String>;
     /// Returns a mutable reference to the lookup table, or `None` if it is empty
     fn lookup_mut(&mut self) -> &mut HashSet<String>;
     /// Returns a mutable reference to the options list, or `None` if it is empty
@@ -42,7 +44,7 @@ pub trait Command: CommandInternal + Parser {
     fn create_option(&mut self, option: &str, description: &str, deprecated: bool) -> &mut Self {
         let arg = ArgBuilder::default()
             .set_long(option)
-            .set_short(option)
+            .set_short(option, self.lookup())
             .set_description(description)
             .set_deprecated(deprecated)
             .build();
@@ -95,5 +97,8 @@ impl Command for MainCommand {
     }
     fn lookup_mut(&mut self) -> &mut HashSet<String> {
         &mut self.lookup
+    }
+    fn lookup(&self) -> &HashSet<String> {
+        &self.lookup
     }
 }

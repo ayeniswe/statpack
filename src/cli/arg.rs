@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(super) struct Arg {
     pub(super) short: String,
@@ -24,7 +26,7 @@ pub(super) struct ArgBuilder {
     deprecated: bool,
 }
 impl ArgBuilder {
-    pub(super) fn set_short(&mut self, option: &str) -> &mut Self {
+    pub(super) fn set_short(&mut self, option: &str, lookup_table: &HashSet<String>) -> &mut Self {
         self.short = format!("-{}", option.chars().next().unwrap());
         self
     }
