@@ -44,7 +44,7 @@ pub trait Command: CommandInternal + Parser {
     fn create_option(&mut self, option: &str, description: &str, deprecated: bool) -> &mut Self {
         let arg = ArgBuilder::default()
             .set_long(option)
-            .set_short(option, self.lookup())
+            .gen_short(option, self.lookup())
             .set_description(description)
             .set_deprecated(deprecated)
             .build();

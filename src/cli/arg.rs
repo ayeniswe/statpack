@@ -26,8 +26,20 @@ pub(super) struct ArgBuilder {
     deprecated: bool,
 }
 impl ArgBuilder {
-    pub(super) fn set_short(&mut self, option: &str, lookup_table: &HashSet<String>) -> &mut Self {
+    pub(super) fn set_short(&mut self, option: &str) -> &mut Self {
         self.short = format!("-{}", option.chars().next().unwrap());
+        self
+    }
+    /// Generate a short option flag
+    pub(super) fn gen_short(&mut self, option: &str, lookup_table: &HashSet<String>) -> &mut Self {
+        let mut short = String::from("-");
+        for char in option.chars() {
+            short.push(char);
+            if lookup_table.get(short.as_str()) == None {
+                break;
+            }
+        }
+        self.short = short;
         self
     }
     pub(super) fn set_long(&mut self, option: &str) -> &mut Self {
