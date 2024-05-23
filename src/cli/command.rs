@@ -41,12 +41,21 @@ pub trait Command: CommandInternal + Parser {
     /// let mut parser = Parser::new();
     /// parser.create_option("verbose", "Enable verbose mode", false);
     /// ```
-    fn create_option(&mut self, option: &str, description: &str, deprecated: bool) -> &mut Self {
+    fn create_option(
+        &mut self,
+        option: &str,
+        description: &str,
+        deprecated: bool,
+        required: bool,
+        default: Option<String>,
+    ) -> &mut Self {
         let arg = ArgBuilder::default()
-            .set_long(option)
             .gen_short(option, self.lookup())
+            .set_long(option)
             .set_description(description)
             .set_deprecated(deprecated)
+            .set_required(required)
+            .set_default(default)
             .build();
         self.add(arg);
         self
@@ -60,12 +69,14 @@ pub trait Command: CommandInternal + Parser {
     /// let mut parser = Parser::new();
     /// parser.add_option('-v', "--verbose", "Enable verbose mode", false);
     /// ```
-    fn add_option(
+    fn add_option<T>(
         &mut self,
         short: &str,
         long: &str,
         description: &str,
         deprecated: bool,
+        required: bool,
+        default: Option<String>,
     ) -> &mut Self {
         // Index check if already added
         assert!(
@@ -77,6 +88,8 @@ pub trait Command: CommandInternal + Parser {
             long.to_string(),
             description.to_string(),
             deprecated,
+            required,
+            default,
         ));
         self
     }
@@ -87,7 +100,6 @@ pub struct MainCommand {
     options: Vec<Arg>,
     lookup: HashSet<String>,
 }
-
 impl Command for MainCommand {
     fn options(&self) -> &Vec<Arg> {
         &self.options

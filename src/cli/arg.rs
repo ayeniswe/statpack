@@ -6,30 +6,39 @@ pub(super) struct Arg {
     pub(super) long: String,
     description: String,
     deprecated: bool,
+    required: bool,
+    default: Option<String>,
 }
 impl Arg {
-    pub(super) fn new(short: String, long: String, description: String, deprecated: bool) -> Self {
+    pub(super) fn new(
+        short: String,
+        long: String,
+        description: String,
+        deprecated: bool,
+        required: bool,
+        default: Option<String>,
+    ) -> Self {
         Self {
             short,
             long,
             description,
             deprecated,
+            required,
+            default,
         }
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub(super) struct ArgBuilder {
     short: String,
     long: String,
     description: String,
     deprecated: bool,
+    required: bool,
+    default: Option<String>,
 }
 impl ArgBuilder {
-    pub(super) fn set_short(&mut self, option: &str) -> &mut Self {
-        self.short = format!("-{}", option.chars().next().unwrap());
-        self
-    }
     /// Generate a short option flag
     pub(super) fn gen_short(&mut self, option: &str, lookup_table: &HashSet<String>) -> &mut Self {
         let mut short = String::from("-");
@@ -54,12 +63,22 @@ impl ArgBuilder {
         self.deprecated = deprecated;
         self
     }
+    pub(super) fn set_required(&mut self, required: bool) -> &mut Self {
+        self.required = required;
+        self
+    }
+    pub(super) fn set_default(&mut self, default: Option<String>) -> &mut Self {
+        self.default = default;
+        self
+    }
     pub(super) fn build(&self) -> Arg {
         Arg {
             short: self.short.clone(),
             long: self.long.clone(),
             description: self.description.clone(),
             deprecated: self.deprecated,
+            required: self.required,
+            default: self.default.clone(),
         }
     }
 }
