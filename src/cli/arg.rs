@@ -1,13 +1,21 @@
 use std::collections::HashSet;
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone)]
+pub enum ArgType {
+    Integer(i32),
+    Float(f64),
+    Text(String),
+    // Add other types as needed
+}
+
+#[derive(Debug)]
 pub(super) struct Arg {
     pub(super) short: String,
     pub(super) long: String,
     description: String,
     deprecated: bool,
     required: bool,
-    default: Option<String>,
+    default: Option<ArgType>,
 }
 impl Arg {
     pub(super) fn new(
@@ -16,7 +24,7 @@ impl Arg {
         description: String,
         deprecated: bool,
         required: bool,
-        default: Option<String>,
+        default: Option<ArgType>,
     ) -> Self {
         Self {
             short,
@@ -36,15 +44,25 @@ pub(super) struct ArgBuilder {
     description: String,
     deprecated: bool,
     required: bool,
-    default: Option<String>,
+    default: Option<ArgType>,
 }
 impl ArgBuilder {
+    pub(super) fn new() -> Self {
+        Self {
+            short: Default::default(),
+            long: Default::default(),
+            description: Default::default(),
+            deprecated: Default::default(),
+            required: Default::default(),
+            default: Default::default(),
+        }
+    }
     /// Generate a short option flag
     pub(super) fn gen_short(&mut self, option: &str, lookup_table: &HashSet<String>) -> &mut Self {
         let mut short = String::from("-");
         for char in option.chars() {
             short.push(char);
-            if lookup_table.get(short.as_str()) == None {
+            if lookup_table.get(short.as_str()).is_none() {
                 break;
             }
         }
@@ -67,18 +85,18 @@ impl ArgBuilder {
         self.required = required;
         self
     }
-    pub(super) fn set_default(&mut self, default: Option<String>) -> &mut Self {
+    pub(super) fn set_default(&mut self, default: Option<ArgType>) -> &mut Self {
         self.default = default;
         self
     }
     pub(super) fn build(&self) -> Arg {
-        Arg {
-            short: self.short.clone(),
-            long: self.long.clone(),
-            description: self.description.clone(),
-            deprecated: self.deprecated,
-            required: self.required,
-            default: self.default.clone(),
-        }
+        Arg::new(
+            self.short.clone(),
+            self.long.clone(),
+            self.description.clone(),
+            self.deprecated,
+            self.required,
+            self.default.clone(),
+        )
     }
 }

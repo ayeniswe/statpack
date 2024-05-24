@@ -17,7 +17,7 @@ mod internal {
 }
 
 use self::internal::CommandInternal;
-use super::arg::{Arg, ArgBuilder};
+use super::arg::{Arg, ArgBuilder, ArgType};
 use super::parser::Parser;
 use std::collections::HashSet;
 
@@ -47,9 +47,9 @@ pub trait Command: CommandInternal + Parser {
         description: &str,
         deprecated: bool,
         required: bool,
-        default: Option<String>,
+        default: Option<ArgType>,
     ) -> &mut Self {
-        let arg = ArgBuilder::default()
+        let arg = ArgBuilder::new()
             .gen_short(option, self.lookup())
             .set_long(option)
             .set_description(description)
@@ -69,14 +69,14 @@ pub trait Command: CommandInternal + Parser {
     /// let mut parser = Parser::new();
     /// parser.add_option('-v', "--verbose", "Enable verbose mode", false);
     /// ```
-    fn add_option<T>(
+    fn add_option(
         &mut self,
         short: &str,
         long: &str,
         description: &str,
         deprecated: bool,
         required: bool,
-        default: Option<String>,
+        default: Option<ArgType>,
     ) -> &mut Self {
         // Index check if already added
         assert!(
