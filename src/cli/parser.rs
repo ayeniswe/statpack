@@ -1,4 +1,4 @@
-use super::{arg::Arg, command::Command};
+use super::{command::Command, option::CommandOption};
 use crate::utils::search::bisect_search_str_key;
 
 pub(super) trait Parser {
@@ -17,7 +17,7 @@ impl<T: Command> Parser for T {
         // Search range if multiple options
         let left_index;
         let right_index;
-        let key_extractor = |item: &Arg, search_key: &str| {
+        let key_extractor = |item: &CommandOption, search_key: &str| {
             if search_key.starts_with("--") {
                 item.long.clone()
             } else if search_key.starts_with("-") {

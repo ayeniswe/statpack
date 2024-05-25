@@ -1,20 +1,22 @@
 use std::collections::HashSet;
 
-#[derive(Default)]
-pub struct OptionKwargs {
+#[derive(Default, Debug, Clone)]
+pub struct CommandOptionKwargs {
     pub(super) deprecated: bool,
     pub(super) required: bool,
     pub(super) nargs: Option<usize>,
-    pub(super) default: Option<ArgDefault>,
+    pub(super) default: Option<CommandOptionType>,
     pub(super) flag: Option<bool>,
+    pub(super) choices: Option<Vec<CommandOptionType>>,
 }
-impl OptionKwargs {
+impl CommandOptionKwargs {
     fn new(
         deprecated: bool,
         required: bool,
         nargs: Option<usize>,
-        default: Option<ArgDefault>,
+        default: Option<CommandOptionType>,
         flag: Option<bool>,
+        choices: Option<Vec<CommandOptionType>>,
     ) -> Self {
         Self {
             deprecated,
@@ -22,19 +24,21 @@ impl OptionKwargs {
             nargs,
             default,
             flag,
+            choices,
         }
     }
 }
 
 #[derive(Default)]
-pub struct OptionKwargsBuilder {
+pub struct CommandOptionKwargsBuilder {
     deprecated: bool,
     required: bool,
     nargs: Option<usize>,
-    default: Option<ArgDefault>,
+    default: Option<CommandOptionType>,
     flag: Option<bool>,
+    choices: Option<Vec<CommandOptionType>>,
 }
-impl OptionKwargsBuilder {
+impl CommandOptionKwargsBuilder {
     pub fn new() -> Self {
         Self::default()
     }
@@ -50,7 +54,7 @@ impl OptionKwargsBuilder {
         self.nargs = Some(nargs);
         self
     }
-    pub fn set_default(&mut self, default: ArgDefault) -> &mut Self {
+    pub fn set_default(&mut self, default: CommandOptionType) -> &mut Self {
         self.default = Some(default);
         self
     }
@@ -58,72 +62,62 @@ impl OptionKwargsBuilder {
         self.flag = Some(flag);
         self
     }
-    pub fn build(&self) -> OptionKwargs {
-        OptionKwargs::new(
+    pub fn set_choices(&mut self, choices: Vec<CommandOptionType>) -> &mut Self {
+        self.choices = Some(choices);
+        self
+    }
+    pub fn build(&self) -> CommandOptionKwargs {
+        CommandOptionKwargs::new(
             self.deprecated,
             self.required,
             self.nargs,
             self.default.clone(),
             self.flag,
+            self.choices.clone(),
         )
     }
 }
 
-#[derive(Debug, Clone)]
-pub(super) enum ArgDefault {
-    Integer(i32),
-    Float(f64),
+#[derive(Debug, Clone, Default)]
+pub enum CommandOptionType {
+    #[default]
+    None,
     Text(String),
-    // Add other types as needed
+    Int(i32),
+    Float(f64),
 }
 
 #[derive(Debug)]
-pub(super) struct Arg {
+pub(super) struct CommandOption {
     pub(super) short: String,
     pub(super) long: String,
     description: String,
-    deprecated: bool,
-    required: bool,
-    default: Option<ArgDefault>,
-    nargs: Option<usize>,
-    flag: Option<bool>,
+    kwargs: CommandOptionKwargs,
 }
-impl Arg {
+impl CommandOption {
     pub(super) fn new(
         short: String,
         long: String,
         description: String,
-        deprecated: bool,
-        required: bool,
-        nargs: Option<usize>,
-        default: Option<ArgDefault>,
-        flag: Option<bool>,
+        kwargs: CommandOptionKwargs,
     ) -> Self {
         Self {
             short,
             long,
             description,
-            deprecated,
-            required,
-            nargs,
-            default,
-            flag,
+            kwargs,
         }
     }
 }
 
-#[derive(Default, Clone)]
-pub(super) struct ArgBuilder {
+#[derive(Default)]
+pub(super) struct CommandOptionBuilder {
     short: String,
     long: String,
     description: String,
-    deprecated: bool,
-    required: bool,
-    default: Option<ArgDefault>,
-    nargs: Option<usize>,
-    flag: Option<bool>,
+    kwargs: CommandOptionKwargs,
 }
-impl ArgBuilder {
+impl CommandOptionBuilder {
     pub(super) fn new() -> Self {
         Self::default()
     }
@@ -156,24 +150,16 @@ impl ArgBuilder {
         self.description = description.to_string();
         self
     }
-    pub(super) fn set_kwargs(&mut self, kwargs: OptionKwargs) -> &mut Self {
-        self.deprecated = kwargs.deprecated;
-        self.default = kwargs.default;
-        self.nargs = kwargs.nargs;
-        self.required = kwargs.required;
-        self.flag = kwargs.flag;
+    pub(super) fn set_kwargs(&mut self, kwargs: CommandOptionKwargs) -> &mut Self {
+        self.kwargs = kwargs;
         self
     }
-    pub(super) fn build(&self) -> Arg {
-        Arg::new(
+    pub(super) fn build(&self) -> CommandOption {
+        CommandOption::new(
             self.short.clone(),
             self.long.clone(),
             self.description.clone(),
-            self.deprecated,
-            self.required,
-            self.nargs,
-            self.default.clone(),
-            self.flag,
+            self.kwargs.clone(),
         )
     }
 }
