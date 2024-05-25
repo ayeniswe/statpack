@@ -1,7 +1,76 @@
 use std::collections::HashSet;
 
+#[derive(Default)]
+pub struct OptionKwargs {
+    pub(super) deprecated: bool,
+    pub(super) required: bool,
+    pub(super) nargs: Option<usize>,
+    pub(super) default: Option<ArgDefault>,
+    pub(super) flag: Option<bool>,
+}
+impl OptionKwargs {
+    fn new(
+        deprecated: bool,
+        required: bool,
+        nargs: Option<usize>,
+        default: Option<ArgDefault>,
+        flag: Option<bool>,
+    ) -> Self {
+        Self {
+            deprecated,
+            required,
+            nargs,
+            default,
+            flag,
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct OptionKwargsBuilder {
+    deprecated: bool,
+    required: bool,
+    nargs: Option<usize>,
+    default: Option<ArgDefault>,
+    flag: Option<bool>,
+}
+impl OptionKwargsBuilder {
+    pub fn new() -> Self {
+        Self::default()
+    }
+    pub fn set_deprecated(&mut self) -> &mut Self {
+        self.deprecated = true;
+        self
+    }
+    pub fn set_required(&mut self) -> &mut Self {
+        self.required = true;
+        self
+    }
+    pub fn set_nargs(&mut self, nargs: usize) -> &mut Self {
+        self.nargs = Some(nargs);
+        self
+    }
+    pub fn set_default(&mut self, default: ArgDefault) -> &mut Self {
+        self.default = Some(default);
+        self
+    }
+    pub fn set_flag(&mut self, flag: bool) -> &mut Self {
+        self.flag = Some(flag);
+        self
+    }
+    pub fn build(&self) -> OptionKwargs {
+        OptionKwargs::new(
+            self.deprecated,
+            self.required,
+            self.nargs,
+            self.default.clone(),
+            self.flag,
+        )
+    }
+}
+
 #[derive(Debug, Clone)]
-pub enum ArgType {
+pub(super) enum ArgDefault {
     Integer(i32),
     Float(f64),
     Text(String),
@@ -15,7 +84,9 @@ pub(super) struct Arg {
     description: String,
     deprecated: bool,
     required: bool,
-    default: Option<ArgType>,
+    default: Option<ArgDefault>,
+    nargs: Option<usize>,
+    flag: Option<bool>,
 }
 impl Arg {
     pub(super) fn new(
@@ -24,7 +95,9 @@ impl Arg {
         description: String,
         deprecated: bool,
         required: bool,
-        default: Option<ArgType>,
+        nargs: Option<usize>,
+        default: Option<ArgDefault>,
+        flag: Option<bool>,
     ) -> Self {
         Self {
             short,
@@ -32,7 +105,9 @@ impl Arg {
             description,
             deprecated,
             required,
+            nargs,
             default,
+            flag,
         }
     }
 }
@@ -44,18 +119,13 @@ pub(super) struct ArgBuilder {
     description: String,
     deprecated: bool,
     required: bool,
-    default: Option<ArgType>,
+    default: Option<ArgDefault>,
+    nargs: Option<usize>,
+    flag: Option<bool>,
 }
 impl ArgBuilder {
     pub(super) fn new() -> Self {
-        Self {
-            short: Default::default(),
-            long: Default::default(),
-            description: Default::default(),
-            deprecated: Default::default(),
-            required: Default::default(),
-            default: Default::default(),
-        }
+        Self::default()
     }
     /// Generate a short option flag
     pub(super) fn gen_short(&mut self, option: &str, lookup_table: &HashSet<String>) -> &mut Self {
@@ -69,24 +139,29 @@ impl ArgBuilder {
         self.short = short;
         self
     }
-    pub(super) fn set_long(&mut self, option: &str) -> &mut Self {
+    /// Generate a long option flag
+    pub(super) fn gen_long(&mut self, option: &str) -> &mut Self {
         self.long = format!("--{}", option);
+        self
+    }
+    pub(super) fn set_short(&mut self, short: &str) -> &mut Self {
+        self.short = short.to_string();
+        self
+    }
+    pub(super) fn set_long(&mut self, long: &str) -> &mut Self {
+        self.long = long.to_string();
         self
     }
     pub(super) fn set_description(&mut self, description: &str) -> &mut Self {
         self.description = description.to_string();
         self
     }
-    pub(super) fn set_deprecated(&mut self, deprecated: bool) -> &mut Self {
-        self.deprecated = deprecated;
-        self
-    }
-    pub(super) fn set_required(&mut self, required: bool) -> &mut Self {
-        self.required = required;
-        self
-    }
-    pub(super) fn set_default(&mut self, default: Option<ArgType>) -> &mut Self {
-        self.default = default;
+    pub(super) fn set_kwargs(&mut self, kwargs: OptionKwargs) -> &mut Self {
+        self.deprecated = kwargs.deprecated;
+        self.default = kwargs.default;
+        self.nargs = kwargs.nargs;
+        self.required = kwargs.required;
+        self.flag = kwargs.flag;
         self
     }
     pub(super) fn build(&self) -> Arg {
@@ -96,7 +171,9 @@ impl ArgBuilder {
             self.description.clone(),
             self.deprecated,
             self.required,
+            self.nargs,
             self.default.clone(),
+            self.flag,
         )
     }
 }

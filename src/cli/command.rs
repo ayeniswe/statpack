@@ -17,7 +17,7 @@ mod internal {
 }
 
 use self::internal::CommandInternal;
-use super::arg::{Arg, ArgBuilder, ArgType};
+use super::arg::{Arg, ArgBuilder, OptionKwargs};
 use super::parser::Parser;
 use std::collections::HashSet;
 
@@ -39,23 +39,40 @@ pub trait Command: CommandInternal + Parser {
     ///
     /// ```
     /// let mut parser = Parser::new();
-    /// parser.create_option("verbose", "Enable verbose mode", false);
+    /// parser.create_option("verbose", "Enable verbose mode");
     /// ```
-    fn create_option(
+    fn create_option(&mut self, option: &str, description: &str) -> &mut Self {
+        let arg = ArgBuilder::new()
+            .gen_short(option, self.lookup())
+            .gen_long(option)
+            .set_description(description)
+            .set_kwargs(OptionKwargs::default())
+            .build();
+        self.add(arg);
+        self
+    }
+    /// Similar to `create_option` but allows the use of predefined extra options
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let mut parser = Parser::new();
+    /// let kwargs = OptionKwargsBuilder::new()
+    /// .set_deprecated()
+    /// .set_required();
+    /// parser.create_option("verbose", "Enable verbose mode", kwargs);
+    /// ```
+    fn create_option_kwargs(
         &mut self,
         option: &str,
         description: &str,
-        deprecated: bool,
-        required: bool,
-        default: Option<ArgType>,
+        kwargs: OptionKwargs,
     ) -> &mut Self {
         let arg = ArgBuilder::new()
             .gen_short(option, self.lookup())
-            .set_long(option)
+            .gen_long(option)
             .set_description(description)
-            .set_deprecated(deprecated)
-            .set_required(required)
-            .set_default(default)
+            .set_kwargs(kwargs)
             .build();
         self.add(arg);
         self
@@ -67,30 +84,52 @@ pub trait Command: CommandInternal + Parser {
     ///
     /// ```
     /// let mut parser = Parser::new();
-    /// parser.add_option('-v', "--verbose", "Enable verbose mode", false);
+    /// parser.add_option('-v', "--verbose", "Enable verbose mode");
     /// ```
-    fn add_option(
+    fn add_option(&mut self, short: &str, long: &str, description: &str) -> &mut Self {
+        // Index check if already added
+        assert!(
+            self.lookup_mut().get(short).is_none() || self.lookup_mut().get(long).is_none(),
+            "[Error]: short and/or long options already exist"
+        );
+        let arg = ArgBuilder::new()
+            .set_short(short)
+            .set_long(long)
+            .set_description(description)
+            .build();
+        self.add(arg);
+        self
+    }
+    /// Similar to `add_option` but allows the use of predefined extra options
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let mut parser = Parser::new();
+    /// let kwargs = OptionKwargsBuilder::new()
+    /// .set_deprecated()
+    /// .set_required();
+    /// parser.add_option('-v', "--verbose", "Enable verbose mode", kwargs);
+    /// ```
+    fn add_option_kwargs(
         &mut self,
         short: &str,
         long: &str,
         description: &str,
-        deprecated: bool,
-        required: bool,
-        default: Option<ArgType>,
+        kwargs: OptionKwargs,
     ) -> &mut Self {
         // Index check if already added
         assert!(
             self.lookup_mut().get(short) != None || self.lookup_mut().get(long) != None,
             "[Error]: short and/or long options already exist"
         );
-        self.add(Arg::new(
-            short.to_string(),
-            long.to_string(),
-            description.to_string(),
-            deprecated,
-            required,
-            default,
-        ));
+        let arg = ArgBuilder::new()
+            .set_short(short)
+            .set_long(long)
+            .set_description(description)
+            .set_kwargs(kwargs)
+            .build();
+        self.add(arg);
         self
     }
 }
