@@ -1,7 +1,6 @@
 use super::{command::Command, option::CommandOption};
 use crate::utils::search::bisect_search_str_key;
-
-pub(super) trait Parser {
+pub trait Parser {
     /// Searches for the specified option within the internal options list.
     /// ## Returns
     /// Returns a vector of matching options.
@@ -9,7 +8,7 @@ pub(super) trait Parser {
     /// Sort command options list
     fn sort(&mut self);
 }
-impl<T: Command> Parser for T {
+impl<'a, T: Command<'a>> Parser for T {
     fn search_options(&self, option: &str) -> Vec<String> {
         let mut find = vec![];
         let options = self.options();
