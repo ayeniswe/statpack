@@ -113,8 +113,8 @@ impl<'a, T: _Command<'a>> Command<'a> for T {
     fn add_option(&mut self, short: &str, long: &str, description: &str) -> &mut Self {
         // Index check if already added
         assert!(
-            self.lookup_mut().get(short).is_none() || self.lookup_mut().get(long).is_none(),
-            "[Error]: short and/or long options already exist"
+            self.lookup_mut().get(short).is_none() && self.lookup_mut().get(long).is_none(),
+            "short and/or long options already exist"
         );
         let arg = CommandOptionBuilder::new()
             .set_short(short)
@@ -133,8 +133,8 @@ impl<'a, T: _Command<'a>> Command<'a> for T {
     ) -> &mut Self {
         // Index check if already added
         assert!(
-            self.lookup_mut().get(short) != None || self.lookup_mut().get(long) != None,
-            "[Error]: short and/or long options already exist"
+            self.lookup_mut().get(short).is_none() && self.lookup_mut().get(long).is_none(),
+            "short and/or long options already exist"
         );
         let arg = CommandOptionBuilder::new()
             .set_short(short)
@@ -150,6 +150,26 @@ impl<'a, T: _Command<'a>> Command<'a> for T {
 //***************************************************
 // All predefined commands to be utilized in the cli
 //***************************************************
+#[derive(Debug, Default)]
+pub struct MockCommand<'a> {
+    options: Vec<CommandOption<'a>>,
+    lookup: HashSet<String>,
+}
+impl<'a> _Command<'a> for MockCommand<'a> {
+    fn options(&self) -> &Vec<CommandOption> {
+        &self.options
+    }
+    fn options_mut(&mut self) -> &mut Vec<CommandOption<'a>> {
+        &mut self.options
+    }
+    fn lookup_mut(&mut self) -> &mut HashSet<String> {
+        &mut self.lookup
+    }
+    fn lookup(&self) -> &HashSet<String> {
+        &self.lookup
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct MainCommand<'a> {
     options: Vec<CommandOption<'a>>,
@@ -167,5 +187,108 @@ impl<'a> _Command<'a> for MainCommand<'a> {
     }
     fn lookup(&self) -> &HashSet<String> {
         &self.lookup
+    }
+}
+
+#[cfg(test)]
+mod add_option_tests {
+    use super::*;
+
+    #[test]
+    fn test_add_unique_option() {
+        let mut command: MockCommand = MockCommand::default();
+        command.add_option("-a", "--apple", "Description for Apple option");
+
+        assert_eq!(
+            command.options,
+            [CommandOption {
+                short: "-a".to_string(),
+                long: "--apple".to_string(),
+                description: "Description for Apple option".to_string(),
+                kwargs: None,
+            }],
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "short and/or long options already exist")]
+    fn test_add_option_with_conflicting_short_name() {
+        let mut command: MockCommand = MockCommand::default();
+        command.add_option("-a", "--apple", "mock");
+        command.add_option("-a", "--apricot", "mock");
+    }
+
+    #[test]
+    #[should_panic(expected = "short and/or long options already exist")]
+    fn test_add_option_with_conflicting_long_name() {
+        // Arrange
+        let mut command: MockCommand = MockCommand::default();
+        command.add_option("-a", "--apple", "mock");
+        // dbg!(command.lookup);
+        command.add_option("-ab", "--apple", "mock");
+    }
+
+    #[test]
+    #[should_panic(expected = "short and/or long options already exist")]
+    fn test_add_option_with_conflicting_long_and_short_name() {
+        // Arrange
+        let mut command: MockCommand = MockCommand::default();
+        command.add_option("-a", "--apple", "mock");
+        // dbg!(command.lookup);
+        command.add_option("-ab", "--apple", "mock");
+    }
+}
+
+#[cfg(test)]
+mod add_option_kwargs_tests {
+    use super::*;
+    use crate::cli::option::CommandOptionKwargsBuilder;
+
+    #[test]
+    fn test_add_unique_option() {
+        let mut command: MockCommand = MockCommand::default();
+        let mut builder = CommandOptionKwargsBuilder::new();
+        let kwargs = builder.set_deprecated().build();
+        command.add_option_kwargs("-a", "--apple", "Description for Apple option", &kwargs);
+
+        assert_eq!(
+            command.options,
+            [CommandOption {
+                short: "-a".to_string(),
+                long: "--apple".to_string(),
+                description: "Description for Apple option".to_string(),
+                kwargs: Some(&kwargs),
+            }],
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "short and/or long options already exist")]
+    fn test_add_option_kwargs_with_conflicting_short_name() {
+        let mut command: MockCommand = MockCommand::default();
+        let mut builder = CommandOptionKwargsBuilder::new();
+        let kwargs = builder.set_deprecated().build();
+        command.add_option_kwargs("-a", "--apple", "mock", &kwargs);
+        command.add_option_kwargs("-a", "--apricot", "mock", &kwargs);
+    }
+
+    #[test]
+    #[should_panic(expected = "short and/or long options already exist")]
+    fn test_add_option_kwargs_with_conflicting_long_name() {
+        let mut command: MockCommand = MockCommand::default();
+        let mut builder = CommandOptionKwargsBuilder::new();
+        let kwargs = builder.set_deprecated().build();
+        command.add_option_kwargs("-a", "--apple", "mock", &kwargs);
+        command.add_option_kwargs("-ab", "--apple", "mock", &kwargs);
+    }
+
+    #[test]
+    #[should_panic(expected = "short and/or long options already exist")]
+    fn test_add_option_kwargs_with_conflicting_long_and_short_name() {
+        let mut command: MockCommand = MockCommand::default();
+        let mut builder = CommandOptionKwargsBuilder::new();
+        let kwargs = builder.set_deprecated().build();
+        command.add_option_kwargs("-a", "--apple", "mock", &kwargs);
+        command.add_option_kwargs("-ab", "--apple", "mock", &kwargs);
     }
 }

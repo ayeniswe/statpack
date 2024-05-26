@@ -5,7 +5,7 @@ use std::collections::HashSet;
 /// The `CommandOptionKwargs` struct is used to specify various optional parameters
 /// for a command-line option, such as whether it is deprecated, required, or if it
 /// has a default value or a set of valid choices.
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug, Clone, PartialEq)]
 pub struct CommandOptionKwargs<'a> {
     pub(super) deprecated: bool,
     pub(super) required: bool,
@@ -118,7 +118,7 @@ impl<'a> CommandOptionKwargsBuilder<'a> {
 ///
 /// The `CommandOptionType` enum is used to define the type of value that a command-line option can hold.
 /// It supports various types such as `None`, `Text`, `Int`, `Float`, `File`.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum CommandOptionType {
     Text(String),
     File(String),
@@ -131,12 +131,12 @@ pub enum CommandOptionType {
 /// The `CommandOption` struct is used to define a command-line option with its short and long
 /// versions, a description, and optional additional parameters encapsulated in `CommandOptionKwargs`.
 ///
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct CommandOption<'a> {
     pub(super) short: String,
     pub(super) long: String,
-    description: String,
-    kwargs: Option<&'a CommandOptionKwargs<'a>>,
+    pub(super) description: String,
+    pub(super) kwargs: Option<&'a CommandOptionKwargs<'a>>,
 }
 impl<'a> CommandOption<'a> {
     pub(super) fn new(
@@ -272,11 +272,9 @@ mod gen_short_tests {
     #[should_panic(expected = "option can not be empty")]
     fn test_gen_short_empty_option() {
         let lookup_table = HashSet::new();
-        let option = CommandOptionBuilder::new()
+        CommandOptionBuilder::new()
             .gen_short("", &lookup_table)
             .build();
-
-        assert_eq!(option.short, "");
     }
 
     #[test]
