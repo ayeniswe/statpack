@@ -13,6 +13,8 @@ pub struct CommandOptionKwargs<'a> {
     pub(super) default: Option<&'a CommandOptionType>,
     pub(super) flag: Option<bool>,
     pub(super) choices: Option<&'a Vec<&'a CommandOptionType>>,
+    // pub(super) prompt: Option<&'a str>,
+    pub(super) confirmation: Option<&'a str>,
 }
 impl<'a> CommandOptionKwargs<'a> {
     fn new(
@@ -22,6 +24,8 @@ impl<'a> CommandOptionKwargs<'a> {
         default: Option<&'a CommandOptionType>,
         flag: Option<bool>,
         choices: Option<&'a Vec<&'a CommandOptionType>>,
+        // prompt: Option<&'a str>,
+        confirmation: Option<&'a str>,
     ) -> Self {
         Self {
             deprecated,
@@ -30,6 +34,8 @@ impl<'a> CommandOptionKwargs<'a> {
             default,
             flag,
             choices,
+            // prompt,
+            confirmation,
         }
     }
 }
@@ -43,37 +49,55 @@ pub struct CommandOptionKwargsBuilder<'a> {
     default: Option<&'a CommandOptionType>,
     flag: Option<bool>,
     choices: Option<&'a Vec<&'a CommandOptionType>>,
+    // prompt: Option<&'a str>,
+    confirmation: Option<&'a str>,
 }
 impl<'a> CommandOptionKwargsBuilder<'a> {
     pub fn new() -> Self {
         Self::default()
     }
+    /// Indicates if the command-line option is deprecated.
     pub fn set_deprecated(&mut self) -> &mut Self {
         self.deprecated = true;
         self
     }
+    /// Specifies if the command-line option is required.
     pub fn set_required(&mut self) -> &mut Self {
         self.required = true;
         self
     }
+    /// Specifies the number of arguments that the command-line option takes.
     pub fn set_nargs(&mut self, nargs: usize) -> &mut Self {
         self.nargs = Some(nargs);
         self
     }
+    /// Provides a default value for the command-line option.
     pub fn set_default(&mut self, default: &'a CommandOptionType) -> &mut Self {
         self.default = Some(default);
         self
     }
+    /// Indicates if the command-line option is a flag (boolean) option.
     pub fn set_flag(&mut self, flag: bool) -> &mut Self {
         self.flag = Some(flag);
         self
     }
+    /// Specifies a set of valid choices for the command-line option.
     pub fn set_choices(&mut self, choices: &'a mut Vec<&'a CommandOptionType>) -> &mut Self {
         // Default must be in choices if specified
         if let Some(default) = self.default {
             choices.push(default);
         }
         self.choices = Some(choices);
+        self
+    }
+    // /// Provides a prompt message for interactive user input.
+    // pub fn set_prompt(&mut self, prompt: &'a str) -> &mut Self {
+    //     self.prompt = Some(prompt);
+    //     self
+    // }
+    /// Indicates if the command-line option requires confirmation.
+    pub fn set_confirmation(&mut self, confirmation: &'a str) -> &mut Self {
+        self.confirmation = Some(confirmation);
         self
     }
     pub fn build(&self) -> CommandOptionKwargs {
@@ -84,6 +108,8 @@ impl<'a> CommandOptionKwargsBuilder<'a> {
             self.default,
             self.flag,
             self.choices,
+            // self.prompt,
+            self.confirmation,
         )
     }
 }
@@ -140,7 +166,7 @@ impl<'a> CommandOptionBuilder<'a> {
     pub(super) fn new() -> Self {
         Self::default()
     }
-    /// Generate a short option flag
+    /// A `-` short option flag
     pub(super) fn gen_short(&mut self, option: &str, lookup_table: &HashSet<String>) -> &mut Self {
         let mut short = String::from("-");
         for char in option.chars() {
@@ -152,15 +178,21 @@ impl<'a> CommandOptionBuilder<'a> {
         self.short = short;
         self
     }
-    /// Generate a long option flag
+    /// A `--` long option flag
     pub(super) fn gen_long(&mut self, option: &str) -> &mut Self {
         self.long = format!("--{}", option);
         self
     }
+    /// A specified short option flag
+    ///
+    /// Useful for unconvential flags rather than `-` or `--`
     pub(super) fn set_short(&mut self, short: &str) -> &mut Self {
         self.short = short.to_string();
         self
     }
+    /// A specified long option flag
+    ///
+    /// Useful for unconvential flags rather than `-` or `--`
     pub(super) fn set_long(&mut self, long: &str) -> &mut Self {
         self.long = long.to_string();
         self
@@ -169,6 +201,7 @@ impl<'a> CommandOptionBuilder<'a> {
         self.description = description.to_string();
         self
     }
+    /// Additional configuration options (kwargs)
     pub(super) fn set_kwargs(&mut self, kwargs: &'a CommandOptionKwargs) -> &mut Self {
         self.kwargs = Some(kwargs);
         self
