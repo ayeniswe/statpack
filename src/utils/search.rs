@@ -38,7 +38,7 @@ where
 }
 
 #[cfg(test)]
-mod tests {
+mod bisect_search_str_key_tests {
     use super::*;
 
     #[derive(Debug, PartialEq)]

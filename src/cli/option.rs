@@ -168,13 +168,39 @@ impl<'a> CommandOptionBuilder<'a> {
     }
     /// A `-` short option flag
     pub(super) fn gen_short(&mut self, option: &str, lookup_table: &HashSet<String>) -> &mut Self {
+        assert!(option.len() != 0, "option can not be empty");
+
         let mut short = String::from("-");
+        let validate_gen = |string: String| {
+            if lookup_table.get(string.as_str()).is_some() {
+                return String::new();
+            }
+            string
+        };
+
+        // First generation attempt
         for char in option.chars() {
             short.push(char);
             if lookup_table.get(short.as_str()).is_none() {
                 break;
             }
         }
+        short = validate_gen(short);
+
+        // Second generation attempt
+        if short.is_empty() {
+            short = String::from("-");
+
+            let option_chars = option.chars();
+            for char in option_chars.step_by(2) {
+                short.push(char);
+                if lookup_table.get(short.as_str()).is_none() {
+                    break;
+                }
+            }
+        }
+        short = validate_gen(short);
+
         self.short = short;
         self
     }
@@ -213,5 +239,87 @@ impl<'a> CommandOptionBuilder<'a> {
             self.description.clone(),
             self.kwargs,
         )
+    }
+}
+
+#[cfg(test)]
+mod gen_short_tests {
+    use super::*;
+
+    #[test]
+    fn test_gen_short_no_conflict() {
+        let lookup_table = HashSet::new();
+        let option = CommandOptionBuilder::new()
+            .gen_short("apple", &lookup_table)
+            .build();
+
+        assert_eq!(option.short, "-a");
+    }
+
+    #[test]
+    fn test_gen_short_with_conflicts() {
+        let mut lookup_table = HashSet::new();
+        lookup_table.insert("-a".to_string());
+        lookup_table.insert("-ap".to_string());
+        let option = CommandOptionBuilder::new()
+            .gen_short("apple", &lookup_table)
+            .build();
+
+        assert_eq!(option.short, "-app");
+    }
+
+    #[test]
+    #[should_panic(expected = "option can not be empty")]
+    fn test_gen_short_empty_option() {
+        let lookup_table = HashSet::new();
+        let option = CommandOptionBuilder::new()
+            .gen_short("", &lookup_table)
+            .build();
+
+        assert_eq!(option.short, "");
+    }
+
+    #[test]
+    fn test_gen_short_second_gen() {
+        let mut lookup_table = HashSet::new();
+        lookup_table.insert("-a".to_string());
+        lookup_table.insert("-ap".to_string());
+        lookup_table.insert("-app".to_string());
+        lookup_table.insert("-appl".to_string());
+        lookup_table.insert("-apple".to_string());
+
+        let option = CommandOptionBuilder::new()
+            .gen_short("apple", &lookup_table)
+            .build();
+
+        assert_eq!(option.short, "-ape");
+    }
+
+    #[test]
+    fn test_gen_short_max_exhaustive() {
+        let mut lookup_table = HashSet::new();
+        lookup_table.insert("-a".to_string());
+        lookup_table.insert("-ap".to_string());
+        lookup_table.insert("-app".to_string());
+        lookup_table.insert("-appl".to_string());
+        lookup_table.insert("-apple".to_string());
+        lookup_table.insert("-ape".to_string());
+        let option = CommandOptionBuilder::new()
+            .gen_short("apple", &lookup_table)
+            .build();
+
+        assert_eq!(option.short, "");
+    }
+}
+
+#[cfg(test)]
+mod gen_long_tests {
+    use super::*;
+
+    #[test]
+    fn test_gen_long() {
+        let option = CommandOptionBuilder::new().gen_long("apple").build();
+
+        assert_eq!(option.long, "--apple");
     }
 }
