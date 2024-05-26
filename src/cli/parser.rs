@@ -2,8 +2,6 @@ use super::{command::Command, option::CommandOption};
 use crate::utils::search::bisect_search_str_key;
 pub trait Parser {
     /// Searches for the specified option within the internal options list.
-    /// ## Returns
-    /// Returns a vector of matching options.
     fn search_options(&self, option: &str) -> Vec<String>;
     /// Sort command options list
     fn sort(&mut self);
@@ -37,5 +35,48 @@ impl<'a, T: Command<'a>> Parser for T {
     }
     fn sort(&mut self) {
         self.options_mut().sort_by(|a, b| a.long.cmp(&b.long));
+    }
+}
+
+mod search_options_tests {
+    use super::*;
+    use crate::cli::command::MockCommand;
+
+    #[test]
+    fn test_search_options_single_option() {
+        let mut command = MockCommand::default();
+        command
+            .add_option("-a", "--apple", "Description for Apple option")
+            .add_option("-ap", "--apricot", "Description for Apple option")
+            .sort();
+        let result = command.search_options("--appl");
+
+        assert_eq!(result, vec!["--apple"]);
+    }
+
+    #[test]
+    fn test_search_options_multiple_options() {
+        let mut command = MockCommand::default();
+        command
+            .add_option("-a", "--ab", "Description for Apple option")
+            .add_option("-acd", "--acde", "Description for Apple option")
+            .add_option("-ad", "--ade", "Description for Apple option")
+            .add_option("-ab", "--abc", "Description for Apple option")
+            .sort();
+        let result = command.search_options("--ab");
+
+        assert_eq!(result, vec!["--ab", "--abc"]);
+    }
+
+    #[test]
+    fn test_search_options_option_not_found() {
+        let mut command = MockCommand::default();
+        command
+            .add_option("-a", "--apple", "Description for Apple option")
+            .add_option("-ab", "--applicable", "Description for Apple option")
+            .sort();
+        let result = command.search_options("--na");
+
+        assert!(result.is_empty());
     }
 }
