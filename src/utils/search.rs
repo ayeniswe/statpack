@@ -36,3 +36,172 @@ where
 
     index
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[derive(Debug, PartialEq)]
+    struct TestStruct {
+        name: String,
+    }
+
+    fn key_extractor(item: &TestStruct, _search_key: &str) -> String {
+        item.name.clone()
+    }
+
+    #[test]
+    fn test_bisect_search_str_key_exact_match() {
+        let list = vec![
+            TestStruct {
+                name: "apple".to_string(),
+            },
+            TestStruct {
+                name: "banana".to_string(),
+            },
+            TestStruct {
+                name: "cherry".to_string(),
+            },
+            TestStruct {
+                name: "date".to_string(),
+            },
+            TestStruct {
+                name: "fig".to_string(),
+            },
+        ];
+
+        assert_eq!(
+            bisect_search_str_key(&list, "banana", false, key_extractor),
+            1
+        );
+        assert_eq!(
+            bisect_search_str_key(&list, "cherry", true, key_extractor),
+            2
+        );
+    }
+
+    #[test]
+    fn test_bisect_search_str_key_no_match() {
+        let list = vec![
+            TestStruct {
+                name: "apple".to_string(),
+            },
+            TestStruct {
+                name: "banana".to_string(),
+            },
+            TestStruct {
+                name: "cherry".to_string(),
+            },
+            TestStruct {
+                name: "date".to_string(),
+            },
+            TestStruct {
+                name: "fig".to_string(),
+            },
+        ];
+
+        assert_eq!(
+            bisect_search_str_key(&list, "grape", false, key_extractor),
+            -1
+        );
+        assert_eq!(
+            bisect_search_str_key(&list, "apricot", true, key_extractor),
+            -1
+        );
+    }
+
+    #[test]
+    fn test_bisect_search_str_key_partial_match() {
+        let list = vec![
+            TestStruct {
+                name: "apple".to_string(),
+            },
+            TestStruct {
+                name: "apricot".to_string(),
+            },
+            TestStruct {
+                name: "banana".to_string(),
+            },
+            TestStruct {
+                name: "cherry".to_string(),
+            },
+            TestStruct {
+                name: "date".to_string(),
+            },
+            TestStruct {
+                name: "fig".to_string(),
+            },
+        ];
+
+        assert_eq!(bisect_search_str_key(&list, "ap", false, key_extractor), 0);
+        assert_eq!(bisect_search_str_key(&list, "ap", true, key_extractor), 1);
+    }
+
+    #[test]
+    fn test_bisect_search_str_key_empty_list() {
+        let list: Vec<TestStruct> = vec![];
+
+        assert_eq!(
+            bisect_search_str_key(&list, "apple", false, key_extractor),
+            -1
+        );
+    }
+
+    #[test]
+    fn test_bisect_search_str_key_single_element_match() {
+        let list = vec![TestStruct {
+            name: "apple".to_string(),
+        }];
+
+        assert_eq!(
+            bisect_search_str_key(&list, "apple", false, key_extractor),
+            0
+        );
+        assert_eq!(
+            bisect_search_str_key(&list, "apple", true, key_extractor),
+            0
+        );
+    }
+
+    #[test]
+    fn test_bisect_search_str_key_single_element_no_match() {
+        let list = vec![TestStruct {
+            name: "apple".to_string(),
+        }];
+
+        assert_eq!(
+            bisect_search_str_key(&list, "banana", false, key_extractor),
+            -1
+        );
+    }
+
+    #[test]
+    fn test_bisect_search_str_key_duplicates() {
+        let list = vec![
+            TestStruct {
+                name: "apple".to_string(),
+            },
+            TestStruct {
+                name: "banana".to_string(),
+            },
+            TestStruct {
+                name: "banana".to_string(),
+            },
+            TestStruct {
+                name: "banana".to_string(),
+            },
+            TestStruct {
+                name: "cherry".to_string(),
+            },
+        ];
+
+        assert_eq!(
+            bisect_search_str_key(&list, "banana", false, key_extractor),
+            1
+        );
+        assert_eq!(
+            bisect_search_str_key(&list, "banana", true, key_extractor),
+            3
+        );
+    }
+}
