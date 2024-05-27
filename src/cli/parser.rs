@@ -1,9 +1,27 @@
 use super::{command::Command, option::CommandOption};
 use crate::utils::search::bisect_search_str_key;
+
+/// The `Parser` trait provides methods for parsing command-line commands associated with a specific command implementation.
+/// Implementations of this trait are responsible for allowing the command to handle command-line arguments efficiently.
 pub trait Parser {
     /// Searches for the specified option within the internal options list.
+    ///
+    /// ## Returns
+    ///
+    /// A vector of strings containing the long names of options that match the given option string.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// let mut command = MockCommand::default();
+    /// command.create_option("verbose", "Enable verbose mode");
+    /// command.create_option("version", "Display version information");
+    ///
+    /// let matches = command.search_options("-v");
+    /// assert_eq!(matches, vec!["--verbose", "--version"]);
+    /// ```
     fn search_options(&self, option: &str) -> Vec<String>;
-    /// Sort command options list
+    /// Sort internal options list
     fn sort(&mut self);
 }
 impl<'a, T: Command<'a>> Parser for T {
@@ -38,9 +56,10 @@ impl<'a, T: Command<'a>> Parser for T {
     }
 }
 
+#[cfg(test)]
 mod search_options_tests {
     use super::*;
-    use crate::cli::command::MockCommand;
+    use crate::cli::command::mock::MockCommand;
 
     #[test]
     fn test_search_options_single_option() {

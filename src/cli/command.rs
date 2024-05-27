@@ -63,7 +63,7 @@ pub trait Command<'a>: _Command<'a> + Parser {
     ///
     /// ```
     /// let mut parser = Parser::new();
-    /// parser.add_option('-v', "--verbose", "Enable verbose mode");
+    /// parser.add_option("-v", "--verbose", "Enable verbose mode");
     /// ```
     fn add_option(&mut self, short: &str, long: &str, description: &str) -> &mut Self;
     /// Similar to `add_option` but allows the use of predefined extra options
@@ -75,7 +75,7 @@ pub trait Command<'a>: _Command<'a> + Parser {
     /// let kwargs = CommandOptionKwargsBuilder::new()
     /// .set_deprecated()
     /// .set_required();
-    /// parser.add_option('-v', "--verbose", "Enable verbose mode", &kwargs);
+    /// parser.add_option("-v", "--verbose", "Enable verbose mode", &kwargs);
     /// ```
     fn add_option_kwargs(
         &mut self,
@@ -151,26 +151,6 @@ impl<'a, T: _Command<'a>> Command<'a> for T {
 // All predefined commands to be utilized in the cli
 //***************************************************
 #[derive(Debug, Default)]
-pub struct MockCommand<'a> {
-    options: Vec<CommandOption<'a>>,
-    lookup: HashSet<String>,
-}
-impl<'a> _Command<'a> for MockCommand<'a> {
-    fn options(&self) -> &Vec<CommandOption> {
-        &self.options
-    }
-    fn options_mut(&mut self) -> &mut Vec<CommandOption<'a>> {
-        &mut self.options
-    }
-    fn lookup_mut(&mut self) -> &mut HashSet<String> {
-        &mut self.lookup
-    }
-    fn lookup(&self) -> &HashSet<String> {
-        &self.lookup
-    }
-}
-
-#[derive(Debug, Default)]
 pub struct MainCommand<'a> {
     options: Vec<CommandOption<'a>>,
     lookup: HashSet<String>,
@@ -191,8 +171,33 @@ impl<'a> _Command<'a> for MainCommand<'a> {
 }
 
 #[cfg(test)]
-mod add_option_tests {
+pub(crate) mod mock {
     use super::*;
+
+    #[derive(Debug, Default)]
+    pub(crate) struct MockCommand<'a> {
+        pub(crate) options: Vec<CommandOption<'a>>,
+        pub(crate) lookup: HashSet<String>,
+    }
+    impl<'a> _Command<'a> for MockCommand<'a> {
+        fn options(&self) -> &Vec<CommandOption> {
+            &self.options
+        }
+        fn options_mut(&mut self) -> &mut Vec<CommandOption<'a>> {
+            &mut self.options
+        }
+        fn lookup_mut(&mut self) -> &mut HashSet<String> {
+            &mut self.lookup
+        }
+        fn lookup(&self) -> &HashSet<String> {
+            &self.lookup
+        }
+    }
+}
+
+#[cfg(test)]
+mod add_option_tests {
+    use super::{mock::MockCommand, *};
 
     #[test]
     fn test_add_unique_option() {
@@ -241,7 +246,7 @@ mod add_option_tests {
 
 #[cfg(test)]
 mod add_option_kwargs_tests {
-    use super::*;
+    use super::{mock::MockCommand, *};
     use crate::cli::option::CommandOptionKwargsBuilder;
 
     #[test]

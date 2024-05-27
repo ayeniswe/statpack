@@ -1,5 +1,14 @@
-/// Performs a binary search on a list of elements to find an element whose key (extracted by the key_extractor function) starts with the given search_key.
-/// If right is true, it finds the rightmost such element; otherwise, it finds the leftmost one.
+/// Performs a binary search on a sorted list of items, comparing the items' keys
+/// (extracted using the provided `key_extractor` function) to the given `search_key`.
+/// Depending on the value of the `right` parameter, it returns the index of the first
+/// or last occurrence of the matching key.
+/// ## Examples
+///
+/// ```
+/// let items = vec!["apple", "banana", "cherry"];
+/// let index = bisect_search_str_key(&items, "banana", false, |item, _| item.to_string());
+/// assert_eq!(index, 1);
+/// ```
 /// ## Returns
 /// Returns the `index` of the found option or `-1` if the option is not found.
 pub fn bisect_search_str_key<'a, U, F>(

@@ -1,10 +1,6 @@
 use std::collections::HashSet;
 
 /// Represents additional configuration options for a command-line option.
-///
-/// The `CommandOptionKwargs` struct is used to specify various optional parameters
-/// for a command-line option, such as whether it is deprecated, required, or if it
-/// has a default value or a set of valid choices.
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct CommandOptionKwargs<'a> {
     pub(super) deprecated: bool,
@@ -115,9 +111,6 @@ impl<'a> CommandOptionKwargsBuilder<'a> {
 }
 
 /// Represents the type of a command-line option.
-///
-/// The `CommandOptionType` enum is used to define the type of value that a command-line option can hold.
-/// It supports various types such as `None`, `Text`, `Int`, `Float`, `File`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum CommandOptionType {
     Text(String),
@@ -126,11 +119,7 @@ pub enum CommandOptionType {
     Float(f64),
 }
 
-/// Represents a command-line option with associated metadata and optional parameters.
-///
-/// The `CommandOption` struct is used to define a command-line option with its short and long
-/// versions, a description, and optional additional parameters encapsulated in `CommandOptionKwargs`.
-///
+/// Represents a command-line option with associated metadata and optional parameters
 #[derive(Debug, PartialEq)]
 pub struct CommandOption<'a> {
     pub(super) short: String,
