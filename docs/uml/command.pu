@@ -1,0 +1,24 @@
+@startuml command
+hide fields
+hide methods
+
+package command {
+    interface _Command<'a> {
+    }
+    interface Command<'a> {
+    }
+
+    class MockCommand<'a> {
+    }
+    class MainCommand<'a> {
+    }
+
+    Command --> _Command : extends
+}
+
+interface Parser {
+}
+
+' Relationships between modules
+Command --> Parser : extends
+@enduml

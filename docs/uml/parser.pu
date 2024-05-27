@@ -1,0 +1,9 @@
+@startuml parser
+hide fields
+hide methods
+
+package parser {
+    interface Parser {
+    }
+}
+@enduml

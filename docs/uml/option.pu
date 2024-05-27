@@ -1,0 +1,26 @@
+@startuml option
+hide fields
+hide methods
+
+package option {
+    class CommandOptionKwargsBuilder<'a> {
+    }
+    class CommandOptionKwargs<'a> {
+    }
+    class CommandOptionBuilder<'a> {
+    }
+    class CommandOption<'a> {
+    }
+    enum CommandOptionType {
+    }
+
+    CommandOptionKwargsBuilder --> CommandOptionKwargs : builds
+    CommandOptionBuilder --> CommandOption : builds
+    CommandOption --> CommandOptionKwargs : uses
+    CommandOptionKwargs --> CommandOptionType : uses
+    CommandOptionType <|-- Text
+    CommandOptionType <|-- File
+    CommandOptionType <|-- Int
+    CommandOptionType <|-- Float
+}
+@enduml
