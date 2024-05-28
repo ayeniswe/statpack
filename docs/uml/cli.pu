@@ -1,0 +1,22 @@
+@startuml cli
+hide fields
+hide methods
+
+package cli {
+    struct CLI<'a> {
+    }
+}
+
+struct CommandOption<'a> {
+}
+struct Command<'a> {
+}
+
+interface _CLICommand<'a> {
+}
+
+' Relationships between modules
+CLI *-- Command : contains
+CLI *-- CommandOption : contains
+CLI ..|> _CLICommand : implements
+@enduml

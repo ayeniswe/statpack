@@ -3,22 +3,27 @@ hide fields
 hide methods
 
 package command {
-    interface _Command<'a> {
+    interface _CLICommand<'a> {
     }
-    interface Command<'a> {
-    }
-
-    class MockCommand<'a> {
-    }
-    class MainCommand<'a> {
+    interface CLICommand<'a> {
     }
 
-    Command --> _Command : extends
+    struct MockCommand<'a> {
+    }
+    struct Command<'a> {
+    }
+
+    CLICommand --> _CLICommand : extends
+    CLICommand <|.. _CLICommand : implements
+    MockCommand ..|> _CLICommand : implements
+    Command ..|> _CLICommand : implements
+    MockCommand *-- Command : contains
+    Command *-- Command : contains
 }
 
 interface Parser {
 }
 
 ' Relationships between modules
-Command --> Parser : extends
+CLICommand --> Parser : extends
 @enduml

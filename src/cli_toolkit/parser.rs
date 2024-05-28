@@ -1,4 +1,4 @@
-use super::{command::Command, option::CommandOption};
+use super::{command::CLICommand, option::CommandOption};
 use crate::utils::search::bisect_search_str_key;
 
 /// The `Parser` trait provides methods for parsing command-line commands associated with a specific command implementation.
@@ -24,7 +24,7 @@ pub trait Parser {
     /// Sort internal options list
     fn sort(&mut self);
 }
-impl<'a, T: Command<'a>> Parser for T {
+impl<'a, T: CLICommand<'a>> Parser for T {
     fn search_options(&self, option: &str) -> Vec<String> {
         let mut find = vec![];
         let options = self.options();
@@ -59,7 +59,7 @@ impl<'a, T: Command<'a>> Parser for T {
 #[cfg(test)]
 mod search_options_tests {
     use super::*;
-    use crate::cli::command::mock::MockCommand;
+    use crate::cli_toolkit::command::mock::MockCommand;
 
     #[test]
     fn test_search_options_single_option() {

@@ -1,9 +1,10 @@
 use super::option::{CommandOption, CommandOptionBuilder, CommandOptionKwargs};
 use super::parser::Parser;
+use std::borrow::BorrowMut;
 use std::collections::HashSet;
 
 /// The `_Command` trait for internal apis `Command` relies on
-pub(super) trait _Command<'a> {
+pub(super) trait _CLICommand<'a> {
     /// Adds an option to the list and updates the lookup table for indexing and preventing collisions.
     /// This ensures that the option is unique and avoids duplicate entries.
     fn add(&mut self, arg: CommandOption<'a>) {
@@ -13,20 +14,40 @@ pub(super) trait _Command<'a> {
         self.lookup_mut().insert(long);
         self.options_mut().push(arg);
     }
-    /// Returns a immutable reference to the lookup table, or `None` if it is empty
+    /// Returns a immutable reference to the commands list
+    fn commands(&self) -> &Vec<Command>;
+    /// Returns a mutable reference to the commands list
+    fn commands_mut(&mut self) -> &mut Vec<Command<'a>>;
+    /// Returns a immutable reference to the lookup table
     fn lookup(&self) -> &HashSet<String>;
-    /// Returns a mutable reference to the lookup table, or `None` if it is empty
+    /// Returns a mutable reference to the lookup table
     fn lookup_mut(&mut self) -> &mut HashSet<String>;
-    /// Returns a mutable reference to the options list, or `None` if it is empty
+    /// Returns a mutable reference to the options list
     fn options_mut(&mut self) -> &mut Vec<CommandOption<'a>>;
-    /// Returns a immutable reference to the options list, or `None` if it is empty
+    /// Returns a immutable reference to the options list
     fn options(&self) -> &Vec<CommandOption>;
 }
 
 /// The `Command` trait provides methods for managing command-line commands.
 /// It extends the `_Command` trait for internal apis and adds higher-level functionality for
 /// creating and managing options with additional configurations.
-pub trait Command<'a>: _Command<'a> + Parser {
+pub trait CLICommand<'a>: _CLICommand<'a> + Parser {
+    /// Creates a new command/subcommand with the specified name.
+    ///
+    /// ## Returns
+    ///
+    /// A mutable reference to the newly created command.
+    ///
+    /// ## Example
+    ///
+    /// ```
+    /// let mut cli = CLI::new("test");
+    /// cli.create_command("test-subcommand", "Do the subcommand");
+    /// ```
+    fn create_command(&mut self, name: &'a str) -> &mut Command<'a> {
+        self.commands_mut().push(Command::new(name));
+        self.commands_mut().last_mut().unwrap()
+    }
     /// Autogen a new command-line option and adds to option list
     ///
     /// This method simplifies the process of building options by automatically generating
@@ -35,57 +56,9 @@ pub trait Command<'a>: _Command<'a> + Parser {
     /// # Example
     ///
     /// ```
-    /// let mut parser = Parser::new();
-    /// parser.create_option("verbose", "Enable verbose mode");
+    /// let mut cli = CLI::new();
+    /// cli.create_option("verbose", "Enable verbose mode");
     /// ```
-    fn create_option(&mut self, option: &str, description: &str) -> &mut Self;
-    /// Similar to `create_option` but allows the use of predefined extra options
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let mut parser = Parser::new();
-    /// let kwargs = CommandOptionKwargsBuilder::new()
-    /// .set_deprecated()
-    /// .set_required();
-    /// parser.create_option("verbose", "Enable verbose mode", &kwargs);
-    /// ```
-    fn create_option_kwargs(
-        &mut self,
-        option: &str,
-        description: &str,
-        kwargs: &'a CommandOptionKwargs,
-    ) -> &mut Self;
-    /// This function is useful for defining command-line arguments that the program accepts.
-    /// By using this method, you can manually add options with a short and long version,
-    /// along with a description to clarify the purpose of the option to the user.
-    /// # Example
-    ///
-    /// ```
-    /// let mut parser = Parser::new();
-    /// parser.add_option("-v", "--verbose", "Enable verbose mode");
-    /// ```
-    fn add_option(&mut self, short: &str, long: &str, description: &str) -> &mut Self;
-    /// Similar to `add_option` but allows the use of predefined extra options
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let mut parser = Parser::new();
-    /// let kwargs = CommandOptionKwargsBuilder::new()
-    /// .set_deprecated()
-    /// .set_required();
-    /// parser.add_option("-v", "--verbose", "Enable verbose mode", &kwargs);
-    /// ```
-    fn add_option_kwargs(
-        &mut self,
-        short: &str,
-        long: &str,
-        description: &str,
-        kwargs: &'a CommandOptionKwargs,
-    ) -> &mut Self;
-}
-impl<'a, T: _Command<'a>> Command<'a> for T {
     fn create_option(&mut self, option: &str, description: &str) -> &mut Self {
         let arg = CommandOptionBuilder::new()
             .gen_short(option, self.lookup())
@@ -95,6 +68,17 @@ impl<'a, T: _Command<'a>> Command<'a> for T {
         self.add(arg);
         self
     }
+    /// Similar to `create_option` but allows the use of predefined extra options
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let mut cli = CLI::new();
+    /// let kwargs = CommandOptionKwargsBuilder::new()
+    /// .set_deprecated()
+    /// .set_required();
+    /// cli.create_option("verbose", "Enable verbose mode", &kwargs);
+    /// ```
     fn create_option_kwargs(
         &mut self,
         option: &str,
@@ -110,6 +94,15 @@ impl<'a, T: _Command<'a>> Command<'a> for T {
         self.add(arg);
         self
     }
+    /// This function is useful for defining command-line arguments that the program accepts.
+    /// By using this method, you can manually add options with a short and long version,
+    /// along with a description to clarify the purpose of the option to the user.
+    /// # Example
+    ///
+    /// ```
+    /// let mut cli = CLI::new();
+    /// cli.add_option("-v", "--verbose", "Enable verbose mode");
+    /// ```
     fn add_option(&mut self, short: &str, long: &str, description: &str) -> &mut Self {
         // Index check if already added
         assert!(
@@ -124,6 +117,17 @@ impl<'a, T: _Command<'a>> Command<'a> for T {
         self.add(arg);
         self
     }
+    /// Similar to `add_option` but allows the use of predefined extra options
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let mut cli = CLI::new();
+    /// let kwargs = CommandOptionKwargsBuilder::new()
+    /// .set_deprecated()
+    /// .set_required();
+    /// cli.add_option("-v", "--verbose", "Enable verbose mode", &kwargs);
+    /// ```
     fn add_option_kwargs(
         &mut self,
         short: &str,
@@ -146,16 +150,22 @@ impl<'a, T: _Command<'a>> Command<'a> for T {
         self
     }
 }
+impl<'a, T: _CLICommand<'a>> CLICommand<'a> for T {}
 
-//***************************************************
-// All predefined commands to be utilized in the cli
-//***************************************************
-#[derive(Debug, Default)]
-pub struct MainCommand<'a> {
-    options: Vec<CommandOption<'a>>,
-    lookup: HashSet<String>,
+#[derive(Default, Debug)]
+pub(crate) struct Command<'a> {
+    pub(crate) name: &'a str,
+    pub(crate) commands: Vec<Command<'a>>,
+    pub(crate) options: Vec<CommandOption<'a>>,
+    pub(crate) lookup: HashSet<String>,
 }
-impl<'a> _Command<'a> for MainCommand<'a> {
+impl<'a> _CLICommand<'a> for Command<'a> {
+    fn commands(&self) -> &Vec<Command> {
+        &self.commands
+    }
+    fn commands_mut(&mut self) -> &mut Vec<Command<'a>> {
+        &mut self.commands
+    }
     fn options(&self) -> &Vec<CommandOption> {
         &self.options
     }
@@ -169,6 +179,14 @@ impl<'a> _Command<'a> for MainCommand<'a> {
         &self.lookup
     }
 }
+impl<'a> Command<'a> {
+    pub fn new(name: &'a str) -> Self {
+        Self {
+            name,
+            ..Default::default()
+        }
+    }
+}
 
 #[cfg(test)]
 pub(crate) mod mock {
@@ -176,10 +194,17 @@ pub(crate) mod mock {
 
     #[derive(Debug, Default)]
     pub(crate) struct MockCommand<'a> {
+        pub(crate) commands: Vec<Command<'a>>,
         pub(crate) options: Vec<CommandOption<'a>>,
         pub(crate) lookup: HashSet<String>,
     }
-    impl<'a> _Command<'a> for MockCommand<'a> {
+    impl<'a> _CLICommand<'a> for MockCommand<'a> {
+        fn commands(&self) -> &Vec<Command> {
+            &self.commands
+        }
+        fn commands_mut(&mut self) -> &mut Vec<Command<'a>> {
+            &mut self.commands
+        }
         fn options(&self) -> &Vec<CommandOption> {
             &self.options
         }
@@ -247,7 +272,7 @@ mod add_option_tests {
 #[cfg(test)]
 mod add_option_kwargs_tests {
     use super::{mock::MockCommand, *};
-    use crate::cli::option::CommandOptionKwargsBuilder;
+    use crate::cli_toolkit::option::CommandOptionKwargsBuilder;
 
     #[test]
     fn test_add_unique_option() {

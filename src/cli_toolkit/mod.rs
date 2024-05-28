@@ -1,4 +1,6 @@
+pub mod cli;
 #[allow(private_bounds)]
+#[allow(private_interfaces)]
 pub mod command;
-pub mod option;
+mod option;
 mod parser;

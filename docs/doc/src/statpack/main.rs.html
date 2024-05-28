@@ -5,9 +5,21 @@
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
 <a href="#5" id="5">5</a>
-</pre></div><pre class="rust"><code><span class="kw">pub mod </span>cli;
+<a href="#6" id="6">6</a>
+<a href="#7" id="7">7</a>
+<a href="#8" id="8">8</a>
+<a href="#9" id="9">9</a>
+<a href="#10" id="10">10</a>
+<a href="#11" id="11">11</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::cli_toolkit::command::CLICommand;
+<span class="kw">use </span>cli_toolkit::cli::CLI;
+
+<span class="kw">pub mod </span>cli_toolkit;
 <span class="kw">pub mod </span>utils;
 
 <span class="attr">#[doc(hidden)]
-</span><span class="kw">fn </span>main() {}
+</span><span class="kw">fn </span>main() {
+    <span class="kw">let </span><span class="kw-2">mut </span>cli = CLI::new(<span class="string">"statpack"</span>);
+    <span class="macro">dbg!</span>(cli.create_command(<span class="string">"re"</span>));
+}
 </code></pre></div></section></main></body></html>

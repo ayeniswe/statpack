@@ -3,13 +3,13 @@ hide fields
 hide methods
 
 package option {
-    class CommandOptionKwargsBuilder<'a> {
+    struct CommandOptionKwargsBuilder<'a> {
     }
-    class CommandOptionKwargs<'a> {
+    struct CommandOptionKwargs<'a> {
     }
-    class CommandOptionBuilder<'a> {
+    struct CommandOptionBuilder<'a> {
     }
-    class CommandOption<'a> {
+    struct CommandOption<'a> {
     }
     enum CommandOptionType {
     }
