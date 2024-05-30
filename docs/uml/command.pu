@@ -1,0 +1,29 @@
+@startuml command
+hide fields
+hide methods
+
+package command {
+    interface _CLICommand<'a> {
+    }
+    interface CLICommand<'a> {
+    }
+
+    struct MockCommand<'a> {
+    }
+    struct Command<'a> {
+    }
+
+    CLICommand --> _CLICommand : extends
+    CLICommand <|.. _CLICommand : implements
+    MockCommand ..|> _CLICommand : implements
+    Command ..|> _CLICommand : implements
+    MockCommand *-- Command : contains
+    Command *-- Command : contains
+}
+
+interface Parser {
+}
+
+' Relationships between modules
+CLICommand --> Parser : extends
+@enduml

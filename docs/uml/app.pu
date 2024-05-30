@@ -1,0 +1,65 @@
+@startuml app
+' hide fields
+hide methods
+
+package option {
+    struct CommandOptionKwargsBuilder<'a> {
+    }
+    struct CommandOptionKwargs<'a> {
+    }
+    struct CommandOptionBuilder<'a> {
+    }
+    struct CommandOption<'a> {
+    }
+
+    enum CommandOptionType {
+        Text
+        File
+        Int
+        Float
+    }
+
+    CommandOptionKwargsBuilder --> CommandOptionKwargs : builds
+    CommandOptionBuilder --> CommandOption : builds
+    CommandOption --> CommandOptionKwargs : uses
+    CommandOptionKwargs --> CommandOptionType : uses
+}
+
+package parser {
+    interface Parser {
+    }
+}
+
+package command {
+    interface _CLICommand<'a> {
+    }
+    interface CLICommand<'a> {
+    }
+
+    struct MockCommand<'a> {
+    }
+    struct Command<'a> {
+    }
+
+    CLICommand --> _CLICommand : extends
+    CLICommand <|.. _CLICommand : implements
+    MockCommand ..|> _CLICommand : implements
+    Command ..|> _CLICommand : implements
+    MockCommand *-- Command : contains
+    Command *-- Command : contains
+}
+package cli {
+    struct CLI<'a> {
+    }
+
+    CLI *-- Command : contains
+}
+
+' Relationships between modules
+MockCommand *-- CommandOption : contains
+CLI *-- CommandOption : contains
+Command *-- CommandOption : contains
+CLICommand --> Parser : extends
+CLI ..|> _CLICommand : implements
+CLICommand <|.. Parser : implements
+@enduml

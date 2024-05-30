@@ -1,0 +1,15 @@
+@startuml parser
+hide fields
+hide methods
+
+package parser {
+    interface Parser {
+    }
+}
+
+interface CLICommand<'a> {
+}
+
+' Relationships between modules
+CLICommand <|.. Parser : implements
+@enduml
