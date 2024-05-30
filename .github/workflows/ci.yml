@@ -9,8 +9,7 @@ jobs:
     uses: ./.github/workflows/build.yml
     with:
       cache-key: ${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
-      
-    steps:
+
     - name: Run tests
       run: cargo test --verbose
 
@@ -20,7 +19,6 @@ jobs:
     with:
       cache-key: ${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
 
-    steps:
     - name: Download build artifacts
       uses: actions/download-artifact@v3
       with:
