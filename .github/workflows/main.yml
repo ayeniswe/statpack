@@ -1,0 +1,80 @@
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+
+    - name: Cache cargo registry
+      uses: actions/cache@v2
+      with:
+        path: ~/.cargo/registry
+        key: ${{ inputs.cache-key }}-cargo-registry
+        restore-keys: |
+          ${{ inputs.cache-key }}-cargo-registry
+
+    - name: Cache cargo index
+      uses: actions/cache@v2
+      with:
+        path: ~/.cargo/git
+        key: ${{ inputs.cache-key }}-cargo-index
+        restore-keys: |
+          ${{ inputs.cache-key }}-cargo-index
+
+    - name: Build
+      run: cargo build
+
+    - name: Run tests
+      run: cargo test --verbose
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+
+    - name: Cache cargo registry
+      uses: actions/cache@v2
+      with:
+        path: ~/.cargo/registry
+        key: ${{ inputs.cache-key }}-cargo-registry
+        restore-keys: |
+          ${{ inputs.cache-key }}-cargo-registry
+
+    - name: Cache cargo index
+      uses: actions/cache@v2
+      with:
+        path: ~/.cargo/git
+        key: ${{ inputs.cache-key }}-cargo-index
+        restore-keys: |
+          ${{ inputs.cache-key }}-cargo-index
+
+    - name: Build
+      run: cargo build
+
+    - name: Download build artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: build-artifacts
+        path: target/release/
