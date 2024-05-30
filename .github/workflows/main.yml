@@ -71,7 +71,7 @@ jobs:
           ${{ inputs.cache-key }}-cargo-index
 
     - name: Build
-      run: cargo build
+      run: cargo build --release
 
     - name: Download build artifacts
       uses: actions/download-artifact@v3
